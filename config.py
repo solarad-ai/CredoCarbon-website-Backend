@@ -36,6 +36,7 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:5174",
     "https://credocarbon.com",
     "https://www.credocarbon.com",
+    "https://credocarbon.netlify.app"
 ]
 
 # Add any additional origins from environment variable
