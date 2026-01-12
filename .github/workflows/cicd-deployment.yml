@@ -65,4 +65,9 @@ jobs:
             --allow-unauthenticated \
             --port 8080 \
             --update-env-vars SECRET_KEY="${{ secrets.SECRET_KEY }}" \
-            --update-env-vars CORS_ORIGINS="${{ secrets.CORS_ORIGINS }}"
+            --update-env-vars CORS_ORIGINS="${{ secrets.CORS_ORIGINS }}" \
+            --update-env-vars ADMIN_USERNAME="${{ secrets.ADMIN_USERNAME }}" \
+            --update-env-vars ADMIN_PASSWORD="${{ secrets.ADMIN_PASSWORD }}" \
+            --update-env-vars USE_GCS="true" \
+            --update-env-vars GCS_BUCKET_NAME="credocarbon-metadata"
+

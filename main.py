@@ -18,8 +18,8 @@ app = FastAPI(
     title="CredoCarbon SuperAdmin API",
     description="Backend API for managing carbon registry data",
     version="1.0.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
 # Configure CORS
