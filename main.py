@@ -31,6 +31,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# Custom middleware to add cache-control headers to all responses
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+
+
+class CacheControlMiddleware(BaseHTTPMiddleware):
+    """Middleware to add cache-control headers to prevent stale data issues."""
+    
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        # Add cache control headers to prevent browser caching of API responses
+        if request.url.path.startswith("/api"):
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
+
+
+app.add_middleware(CacheControlMiddleware)
+
 # Include routers
 app.include_router(auth_router)
 app.include_router(registry_router)

@@ -41,6 +41,8 @@ def read_json_from_gcs(filename: str) -> dict:
     try:
         bucket = get_gcs_bucket()
         blob = bucket.blob(filename)
+        # Reload blob metadata to ensure we get the latest version
+        blob.reload()
         content = blob.download_as_text()
         return json.loads(content)
     except NotFound:
@@ -55,6 +57,8 @@ def write_json_to_gcs(filename: str, data: dict) -> None:
         bucket = get_gcs_bucket()
         blob = bucket.blob(filename)
         content = json.dumps(data, indent=2, ensure_ascii=False)
+        # Set cache control to prevent caching issues
+        blob.cache_control = 'no-cache, no-store, must-revalidate'
         blob.upload_from_string(content, content_type='application/json')
     except Exception as e:
         raise Exception(f"Error writing to GCS: {str(e)}")
