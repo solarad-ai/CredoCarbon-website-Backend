@@ -253,6 +253,45 @@ async def delete_rec_registry_insights(
     raise HTTPException(status_code=404, detail=f"REC registry '{registry_id}' not found in insights")
 
 
+# ============ Helper Functions ============
+
+def recalculate_registry_totals(registry: dict) -> None:
+    """Recalculate a registry's issued/retired totals from its subsectors."""
+    total_issued = 0.0
+    total_retired = 0.0
+    has_retired = False
+    
+    for sector in registry.get('sectors', []):
+        for subsector in sector.get('subsectors', []):
+            issued = subsector.get('issued', 0) or 0
+            retired = subsector.get('retired')
+            total_issued += issued
+            if retired is not None:
+                total_retired += retired
+                has_retired = True
+    
+    registry['issued'] = total_issued
+    registry['retired'] = total_retired if has_retired else None
+
+
+def recalculate_summary_totals(data: dict, category: str) -> None:
+    """Recalculate summary totals for carbon or REC from all registries."""
+    key = 'carbonCredits' if category == 'carbon' else 'renewableEnergyCertificates'
+    registries = data.get(key, {}).get('registries', [])
+    
+    total_issued = 0.0
+    total_retired = 0.0
+    
+    for registry in registries:
+        issued = registry.get('issued', 0) or 0
+        retired = registry.get('retired', 0) or 0
+        total_issued += issued
+        total_retired += retired
+    
+    data[key]['summary']['totalIssued'] = total_issued
+    data[key]['summary']['totalRetired'] = total_retired
+
+
 # ============ Subsector Updates ============
 
 @router.put("/carbon/registry/{registry_id}/sector/{sector_name}/subsector/{subsector_name}", response_model=MessageResponse)
@@ -273,6 +312,10 @@ async def update_carbon_subsector(
                     for i, sub in enumerate(sector.get('subsectors', [])):
                         if sub.get('name') == subsector_name:
                             sector['subsectors'][i] = subsector.model_dump()
+                            # Recalculate registry totals from subsectors
+                            recalculate_registry_totals(registry)
+                            # Recalculate summary totals from all registries
+                            recalculate_summary_totals(data, 'carbon')
                             save_insights_data(data)
                             return MessageResponse(message=f"Subsector '{subsector_name}' updated")
                     raise HTTPException(status_code=404, detail=f"Subsector '{subsector_name}' not found")
@@ -298,6 +341,10 @@ async def update_rec_subsector(
                     for i, sub in enumerate(sector.get('subsectors', [])):
                         if sub.get('name') == subsector_name:
                             sector['subsectors'][i] = subsector.model_dump()
+                            # Recalculate registry totals from subsectors
+                            recalculate_registry_totals(registry)
+                            # Recalculate summary totals from all registries
+                            recalculate_summary_totals(data, 'rec')
                             save_insights_data(data)
                             return MessageResponse(message=f"Subsector '{subsector_name}' updated")
                     raise HTTPException(status_code=404, detail=f"Subsector '{subsector_name}' not found")
